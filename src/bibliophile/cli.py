@@ -260,6 +260,100 @@ def ask(ctx, question, collection, limit):
     console.print(f"\n[dim]Confidence: {results.get('confidence', 0.0):.2%}[/dim]")
 
 
+@cli.command(help="Start an interactive chat session")
+@click.option("--collection", "-c", help="Specific collection to use")
+@click.option("--limit", "-l", type=int, default=5, help="Number of results to return")
+@click.pass_context
+def chat(ctx, collection, limit):
+    """Start an interactive chat session with your documents."""
+    config = ctx.obj["config"]
+    config.load()
+    
+    qa_module = get_qa_module()
+    
+    collections = config.get("collections", [])
+    if not collections:
+        console.print("[red]No collections found. Please index documents first.[/red]")
+        console.print("\nTo index documents, run: bibliophile index /path/to/documents")
+        return
+    
+    query_collection = collection or collections[0]
+    
+    # Initialize QA engine
+    qa_engine = qa_module.QAEngine(
+        config.get("ollama.chat_model", "llama3"),
+        config.get("chroma.path", ".bibliophile/chroma"),
+        config.get("ollama.base_url", "http://localhost:11434")
+    )
+    
+    console.print(f"\n[bold green]Starting chat session[/bold green]")
+    console.print(f"[dim]Using collection: {query_collection}[/dim]")
+    console.print(f"[dim]Type /quit, /exit, or /q to end the session[/dim]")
+    console.print(f"[dim]Type /help for available commands[/dim]\n")
+    
+    # Chat history for context
+    conversation_history = []
+    
+    while True:
+        try:
+            user_input = click.prompt("\n[bold cyan]You:[/bold cyan] ", type=str, strip=True)
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n[bold yellow]Session ended.[/bold yellow]")
+            break
+        
+        if not user_input:
+            continue
+        
+        # Handle special commands
+        if user_input.lower() in ['/quit', '/exit', '/q']:
+            console.print("[bold yellow]Goodbye![/bold yellow]")
+            break
+        
+        if user_input.lower() in ['/help', '/h']:
+            console.print("\n[bold]Available commands:[/bold]")
+            console.print("  /quit, /exit, /q - End the chat session")
+            console.print("  /help, /h - Show this help message")
+            console.print("  /clear - Clear conversation history")
+            console.print("  /collection - Show current collection")
+            continue
+        
+        if user_input.lower() in ['/clear', '/reset']:
+            conversation_history = []
+            console.print("[green]Conversation history cleared.[/green]")
+            continue
+        
+        if user_input.lower() in ['/collection', '/col']:
+            console.print(f"[bold]Current collection:[/bold] {query_collection}")
+            continue
+        
+        # Add to conversation history
+        conversation_history.append({
+            "role": "user",
+            "content": user_input
+        })
+        
+        # Show typing indicator
+        with console.status("[bold green]Thinking..."):
+            results = qa_engine.query(query_collection, user_input, limit=limit)
+        
+        # Add AI response to history
+        conversation_history.append({
+            "role": "assistant",
+            "content": results["answer"]
+        })
+        
+        # Display answer
+        console.print(f"\n[bold green]Assistant:[/bold green]")
+        console.print(Panel(results["answer"], border_style="green"))
+        
+        if results.get("sources"):
+            console.print("\n[bold]Sources:[/bold]")
+            for i, source in enumerate(results["sources"], 1):
+                console.print(f"  {i}. {source}")
+        
+        console.print(f"\n[dim]Confidence: {results.get('confidence', 0.0):.2%}[/dim]")
+
+
 @cli.command(help="List available collections")
 @click.pass_context
 def list_collections(ctx):

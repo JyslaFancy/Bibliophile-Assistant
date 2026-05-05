@@ -84,6 +84,25 @@ bibliophile ask "What are the key findings?" --collection my_project
 bibliophile ask "Summarize the documents" --limit 10
 ```
 
+### Interactive Chat
+
+```bash
+# Start an interactive chat session
+bibliophile chat
+
+# With a specific collection
+bibliophile chat --collection my_project
+
+# With more results per query
+bibliophile chat --limit 10
+```
+
+**Chat Commands:**
+- `/quit`, `/exit`, `/q` - End the chat session
+- `/help`, `/h` - Show available commands
+- `/clear`, `/reset` - Clear conversation history
+- `/collection`, `/col` - Show current collection
+
 ### Manage Collections
 
 ```bash
