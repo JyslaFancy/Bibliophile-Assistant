@@ -33,41 +33,62 @@ def setup_ollama() -> bool:
     Install Ollama based on the operating system.
     Returns True if successful, False otherwise.
     """
+    import shutil
     system = platform.system().lower()
     
     console.print("\n[bold blue]Installing Ollama...[/bold blue]")
     
     try:
         if system == "linux":
-            # Try to install via curl
+            # Download the installer
+            console.print("[blue]Downloading Ollama installer...[/blue]")
             result = subprocess.run(
-                ["curl", "-fsSL", "https://ollama.ai/install.sh", "-o", "install.sh"],
+                ["curl", "-fsSL", "https://ollama.ai/install.sh", "-o", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
                 timeout=30
             )
             if result.returncode != 0:
                 console.print("[red]Failed to download Ollama installer[/red]")
+                console.print(f"Error: {result.stderr}")
                 return False
             
+            # Make executable
+            os.chmod("install_ollama.sh", 0o755)
+            
+            # Run the installer
+            console.print("[blue]Running Ollama installer...[/blue]")
             result = subprocess.run(
-                ["bash", "install.sh"],
+                ["bash", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=120
             )
-            if result.returncode != 0:
-                console.print(f"[red]Failed to install Ollama: {result.stderr}[/red]")
-                return False
             
             # Clean up
-            os.remove("install.sh")
+            if os.path.exists("install_ollama.sh"):
+                os.remove("install_ollama.sh")
+            
+            if result.returncode != 0:
+                console.print(f"[red]Failed to install Ollama[/red]")
+                if result.stderr:
+                    console.print(f"Error: {result.stderr[:500]}")
+                return False
+            
             console.print("[green]Ollama installed successfully![/green]")
+            
+            # Verify installation
+            if not check_ollama():
+                console.print("[yellow]Ollama installed but not in PATH. You may need to restart your shell or add it manually.[/yellow]")
+                console.print("Try: source ~/.bashrc or restart your terminal")
+                return False
+            
             return True
             
         elif system == "darwin":  # macOS
+            console.print("[blue]Downloading Ollama installer...[/blue]")
             result = subprocess.run(
-                ["curl", "-fsSL", "https://ollama.ai/install.sh", "-o", "install.sh"],
+                ["curl", "-fsSL", "https://ollama.ai/install.sh", "-o", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -76,29 +97,46 @@ def setup_ollama() -> bool:
                 console.print("[red]Failed to download Ollama installer[/red]")
                 return False
             
+            os.chmod("install_ollama.sh", 0o755)
+            
+            console.print("[blue]Running Ollama installer...[/blue]")
             result = subprocess.run(
-                ["bash", "install.sh"],
+                ["bash", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=120
             )
+            
+            if os.path.exists("install_ollama.sh"):
+                os.remove("install_ollama.sh")
+            
             if result.returncode != 0:
-                console.print(f"[red]Failed to install Ollama: {result.stderr}[/red]")
+                console.print(f"[red]Failed to install Ollama[/red]")
+                if result.stderr:
+                    console.print(f"Error: {result.stderr[:500]}")
                 return False
             
-            os.remove("install.sh")
             console.print("[green]Ollama installed successfully![/green]")
+            
+            if not check_ollama():
+                console.print("[yellow]Ollama installed but not in PATH.[/yellow]")
+                return False
+            
             return True
             
         elif system == "windows":
-            console.print("[yellow]Windows installation not yet automated.[/yellow]")
-            console.print("Please download and install Ollama from https://ollama.ai")
+            console.print("[yellow]Windows detected.[/yellow]")
+            console.print("Please install Ollama manually from https://ollama.ai")
+            console.print("Then restart this tool.")
             return False
         else:
             console.print(f"[yellow]Unsupported OS: {system}[/yellow]")
             console.print("Please install Ollama manually from https://ollama.ai")
             return False
             
+    except subprocess.TimeoutExpired:
+        console.print("[red]Ollama installation timed out[/red]")
+        return False
     except Exception as e:
         console.print(f"[red]Error installing Ollama: {e}[/red]")
         return False
@@ -216,6 +254,96 @@ def pull_model(model_name: str) -> bool:
             return True
         else:
             console.print(f"[red]Failed to pull model: {result.stderr}[/red]")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        console.print(f"[red]Timeout pulling model {model_name}[/red]")
+        return False
+    except Exception as e:
+        console.print(f"[red]Error pulling model: {e}[/red]")
+        return False
+
+
+def start_ollama_server() -> bool:
+    """
+    Start the Ollama server if not already running.
+    Returns True if server is running, False otherwise.
+    """
+    if not check_ollama():
+        console.print("[red]Ollama is not installed[/red]")
+        return False
+    
+    # Check if server is already running
+    try:
+        import requests
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            console.print("[green]Ollama server is already running[/green]")
+            return True
+    except:
+        pass
+    
+    console.print("[blue]Starting Ollama server...[/blue]")
+    
+    try:
+        # Start ollama serve in background
+        # Note: This will continue running after the script exits
+        subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        
+        # Wait for server to start
+        import time
+        for _ in range(30):  # Wait up to 30 seconds
+            time.sleep(1)
+            try:
+                response = requests.get("http://localhost:11434/api/tags", timeout=5)
+                if response.status_code == 200:
+                    console.print("[green]Ollama server started successfully[/green]")
+                    return True
+            except:
+                pass
+        
+        console.print("[red]Ollama server failed to start[/red]")
+        return False
+        
+    except Exception as e:
+        console.print(f"[red]Error starting Ollama server: {e}[/red]")
+        return False
+
+
+def pull_model(model_name: str) -> bool:
+    """
+    Pull a model using Ollama.
+    Returns True if successful, False otherwise.
+    """
+    if not check_ollama():
+        console.print("[red]Ollama is not installed![/red]")
+        return False
+    
+    # First, make sure server is running
+    if not start_ollama_server():
+        return False
+    
+    console.print(f"\n[bold blue]Pulling model: {model_name}[/bold blue]")
+    
+    try:
+        result = subprocess.run(
+            ["ollama", "pull", model_name],
+            capture_output=True,
+            text=True,
+            timeout=600  # 10 minutes for larger models
+        )
+        
+        if result.returncode == 0:
+            console.print(f"[green]Model {model_name} pulled successfully![/green]")
+            return True
+        else:
+            console.print(f"[red]Failed to pull model: {model_name}[/red]")
+            if result.stderr:
+                console.print(f"Error: {result.stderr[:500]}")
             return False
             
     except subprocess.TimeoutExpired:

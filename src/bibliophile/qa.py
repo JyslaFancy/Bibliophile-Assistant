@@ -80,6 +80,19 @@ Answer:"""
             The model's response
         """
         import requests
+        from .setup import start_ollama_server, check_ollama
+        
+        # Check if Ollama is installed and server is running
+        if not check_ollama():
+            raise ValueError("Ollama is not installed. Run 'bibliophile setup --install-ollama' to install.")
+        
+        # Try to start server if not running
+        try:
+            requests.get(f"{self.base_url}/api/tags", timeout=5)
+        except:
+            console.print("[blue]Starting Ollama server...[/blue]")
+            if not start_ollama_server():
+                raise ValueError("Could not start Ollama server. Please start it manually with 'ollama serve'")
         
         try:
             response = requests.post(

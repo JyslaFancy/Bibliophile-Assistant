@@ -59,8 +59,11 @@ def cli(ctx, config):
 
 @cli.command(name="setup", help="Setup Ollama and detect hardware")
 @click.option("--auto/--manual", default=True, help="Auto-detect and setup")
+@click.option("--install-ollama", is_flag=True, help="Automatically install Ollama if not found")
+@click.option("--pull-models", is_flag=True, help="Automatically pull suggested models")
+@click.option("--start-server", is_flag=True, help="Start Ollama server")
 @click.pass_context
-def setup_cli(ctx, auto):
+def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
     """Setup Ollama and detect system hardware."""
     setup_module = get_setup_module()
     config_module = get_config_module()
@@ -109,12 +112,26 @@ def setup_cli(ctx, auto):
                 })
                 console.print("[green]Configuration saved![/green]")
         
+        # Check and install Ollama if needed
         task = progress.add_task("Checking Ollama...", total=None)
         if not setup_module.check_ollama():
             console.print("\n[bold yellow]Ollama not found![/bold yellow]")
-            if click.confirm("Install Ollama now?"):
-                setup_module.setup_ollama()
+            if install_ollama or click.confirm("Install Ollama now?"):
+                if setup_module.setup_ollama():
+                    console.print("[green]Ollama installed![/green]")
+                else:
+                    console.print("[red]Failed to install Ollama[/red]")
+                    console.print("Please install manually from https://ollama.ai")
         progress.update(task, completed=True)
+        
+        # Start Ollama server if requested
+        if start_server:
+            task = progress.add_task("Starting Ollama server...", total=None)
+            if setup_module.start_ollama_server():
+                console.print("[green]Ollama server started![/green]")
+            else:
+                console.print("[yellow]Could not start Ollama server[/yellow]")
+            progress.update(task, completed=True)
     
     # Check if models are pulled
     config.load()
@@ -130,8 +147,10 @@ def setup_cli(ctx, auto):
             # Check if model exists locally
             local_models = setup_module.list_local_models()
             if model_name not in local_models:
-                if click.confirm(f"Pull {model_name} now?"):
+                if pull_models or click.confirm(f"Pull {model_name} now?"):
                     setup_module.pull_model(model_name)
+            else:
+                console.print(f"[green]Model {model_name} is already available[/green]")
             progress.update(task, completed=True)
 
 

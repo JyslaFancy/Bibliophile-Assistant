@@ -51,6 +51,18 @@ A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant
 # Auto-detect hardware and suggest models
 bibliophile setup
 
+# Auto-install Ollama if not found
+bibliophile setup --install-ollama
+
+# Auto-pull suggested models
+bibliophile setup --pull-models
+
+# Start Ollama server
+bibliophile setup --start-server
+
+# Full auto-setup (install + models + server)
+bibliophile setup --install-ollama --pull-models --start-server
+
 # Or manually configure
 bibliophile setup --manual
 ```
