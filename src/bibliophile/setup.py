@@ -125,9 +125,56 @@ def setup_ollama() -> bool:
             return True
             
         elif system == "windows":
-            console.print("[yellow]Windows detected.[/yellow]")
-            console.print("Please install Ollama manually from https://ollama.ai")
-            console.print("Then restart this tool.")
+            console.print("[blue]Windows detected. Attempting to install via winget...[/blue]")
+            
+            # Try using winget
+            try:
+                result = subprocess.run(
+                    ["winget", "install", "-e", "--id", "Ollama.Ollama", "--silent"],
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minutes for winget install
+                )
+                
+                if result.returncode == 0:
+                    console.print("[green]Ollama installed successfully via winget![/green]")
+                    
+                    # Verify installation
+                    if not check_ollama():
+                        console.print("[yellow]Ollama installed but not in PATH yet.[/yellow]")
+                        console.print("You may need to restart your terminal or computer.")
+                        return False
+                    
+                    return True
+                else:
+                    console.print(f"[yellow]winget install failed (exit code: {result.returncode})[/yellow]")
+                    # Try non-silent mode
+                    console.print("[blue]Trying interactive winget install...[/blue]")
+                    result = subprocess.run(
+                        ["winget", "install", "--id", "Ollama.Ollama"],
+                        capture_output=True,
+                        text=True,
+                        timeout=300
+                    )
+                    if result.returncode == 0:
+                        console.print("[green]Ollama installed![/green]")
+                        if not check_ollama():
+                            console.print("[yellow]Restart your terminal to update PATH[/yellow]")
+                            return False
+                        return True
+                    else:
+                        console.print(f"[yellow]winget not available or failed[/yellow]")
+            except FileNotFoundError:
+                console.print("[yellow]winget not found[/yellow]")
+            except subprocess.TimeoutExpired:
+                console.print("[red]winget install timed out[/red]")
+            
+            # Fallback: manual install instructions
+            console.print("\n[bold]Manual Windows Installation:[/bold]")
+            console.print("1. Open PowerShell as Administrator")
+            console.print("2. Run: winget install -e --id Ollama.Ollama")
+            console.print("3. Or download from: https://ollama.ai")
+            console.print("\nThen restart this tool.")
             return False
         else:
             console.print(f"[yellow]Unsupported OS: {system}[/yellow]")
