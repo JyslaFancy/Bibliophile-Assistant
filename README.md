@@ -12,12 +12,17 @@ A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant
 
 ## Installation
 
-### Prerequisites
+### 📦 Option 1: Install from PyPI (Recommended)
 
-- Python 3.8 or higher
-- Git (for cloning)
+```bash
+pip install bibliophile-assistant
+```
 
-### Setup
+This installs the `bibliophile` command globally.
+
+---
+
+### 📁 Option 2: Install from GitHub
 
 1. Clone the repository:
    ```bash
@@ -25,25 +30,82 @@ A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant
    cd Bibliophile-Assistant
    ```
 
-2. Install Python dependencies:
+2. Install in development mode:
    ```bash
    pip install -e .
    ```
-   Or install manually:
-   ```bash
-   pip install -r requirements.txt
-   ```
 
-3. Install Ollama (if not already installed):
-   - The tool can automatically install Ollama on Linux/macOS
-   - Or install manually from [https://ollama.ai](https://ollama.ai)
+---
 
-4. Pull the models (the tool will suggest appropriate ones based on your hardware):
-   ```bash
-   bibliophile setup
-   ```
+### ⚠️ Windows Users
+
+After installing, if you get `'bibliophile' is not recognized...`:
+
+**Solution 1: Add Python Scripts to PATH (Recommended)**
+```powershell
+# Run this once to add to your user PATH
+[Environment]::SetEnvironmentVariable("Path", "$env:Path;$env:APPDATA\Python\Scripts", "User")
+# Then open a NEW PowerShell window
+```
+
+**Solution 2: Use Python module directly**
+```powershell
+python -m bibliophile.main setup
+python -m bibliophile.main index C:\path\to\docs
+python -m bibliophile.main chat
+```
+
+**Solution 3: Install system-wide (requires admin)**
+```powershell
+pip install bibliophile-assistant
+```
+
+---
+
+### Prerequisites
+
+- **Python 3.8+**
+- **pip** (usually comes with Python)
+
+---
+
+### Setup Ollama
+
+After installing the package, set up Ollama:
+
+```bash
+# Auto-install Ollama, pull models, and start server
+bibliophile setup --install-ollama --pull-models --start-server
+```
+
+What this does:
+- Detects your hardware (RAM, GPU)
+- Installs Ollama automatically (Linux: curl, macOS: curl, Windows: winget)
+- Suggests optimal models for your system
+- Pulls the recommended models
+- Starts the Ollama server
+
+**Note:** Windows users may need to open PowerShell as Administrator for the first install.
 
 ## Usage
+
+### 💡 Quick Start
+
+```bash
+# Setup everything (Ollama + models + server)
+bibliophile setup --install-ollama --pull-models --start-server
+
+# Index your documents
+bibliophile index /path/to/your/documents
+
+# Ask a question
+bibliophile ask "What is this about?"
+
+# Start interactive chat
+bibliophile chat
+```
+
+---
 
 ### Setup and Configuration
 
@@ -65,6 +127,12 @@ bibliophile setup --install-ollama --pull-models --start-server
 
 # Or manually configure
 bibliophile setup --manual
+```
+
+**Windows users:** If `bibliophile` command doesn't work, use:
+```powershell
+python -m bibliophile.main setup
+python -m bibliophile.main index C:\path\to\docs
 ```
 
 ### Index Documents
