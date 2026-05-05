@@ -277,37 +277,59 @@ def suggest_models(hardware: Dict[str, Any]) -> Dict[str, Any]:
     return suggestions
 
 
-def pull_model(model_name: str) -> bool:
+def pull_model(model_name: str, progress_callback=None) -> bool:
     """
     Pull a model using Ollama.
     Returns True if successful, False otherwise.
+    
+    Args:
+        model_name: Name of the model to pull
+        progress_callback: Optional callback for progress updates
     """
     if not check_ollama():
         console.print("[red]Ollama is not installed![/red]")
         return False
     
-    console.print(f"\n[bold blue]Pulling model: {model_name}[/bold blue]")
-    
     try:
+        # Show that we're pulling
+        if progress_callback:
+            progress_callback(f"[blue]Pulling {model_name}...[/blue]")
+        else:
+            console.print(f"[blue]Pulling {model_name}...[/blue]")
+        
         result = subprocess.run(
             ["ollama", "pull", model_name],
             capture_output=True,
             text=True,
-            timeout=300  # 5 minutes
+            timeout=600  # 10 minutes for larger models
         )
         
         if result.returncode == 0:
-            console.print(f"[green]Model {model_name} pulled successfully![/green]")
+            if progress_callback:
+                progress_callback(f"[green]{model_name} pulled successfully![/green]")
+            else:
+                console.print(f"[green]Model {model_name} pulled successfully![/green]")
             return True
         else:
-            console.print(f"[red]Failed to pull model: {result.stderr}[/red]")
+            if progress_callback:
+                progress_callback(f"[red]Failed to pull {model_name}[/red]")
+            else:
+                console.print(f"[red]Failed to pull model: {model_name}[/red]")
+                if result.stderr:
+                    console.print(f"Error: {result.stderr[:200]}")
             return False
             
     except subprocess.TimeoutExpired:
-        console.print(f"[red]Timeout pulling model {model_name}[/red]")
+        if progress_callback:
+            progress_callback(f"[red]Timeout pulling {model_name}[/red]")
+        else:
+            console.print(f"[red]Timeout pulling model {model_name}[/red]")
         return False
     except Exception as e:
-        console.print(f"[red]Error pulling model: {e}[/red]")
+        if progress_callback:
+            progress_callback(f"[red]Error: {str(e)[:50]}[/red]")
+        else:
+            console.print(f"[red]Error pulling model: {e}[/red]")
         return False
 
 

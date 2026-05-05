@@ -75,10 +75,11 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
         console=console,
     ) as progress:
         
+        # Step 1: Hardware detection
         if auto:
-            task = progress.add_task("Detecting hardware...", total=None)
+            task = progress.add_task("[blue]Detecting hardware...[/blue]", total=None)
             hardware = setup_module.detect_hardware()
-            progress.update(task, completed=True)
+            progress.update(task, description="[green]Hardware detected![/green]", completed=True)
             
             console.print(f"\n[bold green]Hardware Detected:[/bold green]")
             table = Table()
@@ -90,9 +91,10 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
             table.add_row("GPU Memory", f"{hardware['gpu_memory_gb']} GB" if hardware['gpu_memory_gb'] else "None")
             console.print(table)
             
-            task = progress.add_task("Suggesting models...", total=None)
+            # Step 2: Model suggestion
+            task = progress.add_task("[blue]Analyzing system for optimal models...[/blue]", total=None)
             models = setup_module.suggest_models(hardware)
-            progress.update(task, completed=True)
+            progress.update(task, description="[green]Models suggested![/green]", completed=True)
             
             console.print(f"\n[bold green]Suggested Models:[/bold green]")
             table = Table()
@@ -112,46 +114,58 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
                 })
                 console.print("[green]Configuration saved![/green]")
         
-        # Check and install Ollama if needed
-        task = progress.add_task("Checking Ollama...", total=None)
-        if not setup_module.check_ollama():
+        # Step 3: Check Ollama
+        task = progress.add_task("[blue]Checking Ollama installation...[/blue]", total=None)
+        ollama_installed = setup_module.check_ollama()
+        progress.update(task, description="[green]Ollama check complete![/green]", completed=True)
+        
+        if not ollama_installed:
             console.print("\n[bold yellow]Ollama not found![/bold yellow]")
             if install_ollama or click.confirm("Install Ollama now?"):
+                console.print("[blue]Installing Ollama...[/blue]")
                 if setup_module.setup_ollama():
-                    console.print("[green]Ollama installed![/green]")
+                    console.print("[green]Ollama installed successfully![/green]")
+                    ollama_installed = True
                 else:
                     console.print("[red]Failed to install Ollama[/red]")
                     console.print("Please install manually from https://ollama.ai")
-        progress.update(task, completed=True)
         
-        # Start Ollama server if requested
-        if start_server:
-            task = progress.add_task("Starting Ollama server...", total=None)
+        # Step 4: Start server if requested
+        if start_server and ollama_installed:
+            task = progress.add_task("[blue]Starting Ollama server...[/blue]", total=None)
             if setup_module.start_ollama_server():
-                console.print("[green]Ollama server started![/green]")
+                progress.update(task, description="[green]Ollama server started![/green]", completed=True)
             else:
-                console.print("[yellow]Could not start Ollama server[/yellow]")
-            progress.update(task, completed=True)
+                progress.update(task, description="[yellow]Could not start server[/yellow]", completed=True)
     
-    # Check if models are pulled
+    # Step 5: Pull models
     config.load()
     chat_model = config.get("ollama.chat_model", "llama3")
     embedding_model = config.get("ollama.embedding_model", "llama3")
     
-    with Progress() as progress:
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
         for model_name, model_type in [
             (chat_model, "chat"),
             (embedding_model, "embedding")
         ]:
-            task = progress.add_task(f"Checking {model_type} model: {model_name}...", total=None)
-            # Check if model exists locally
+            task = progress.add_task(f"[blue]Checking {model_type} model: {model_name}...[/blue]", total=None)
             local_models = setup_module.list_local_models()
+            
             if model_name not in local_models:
-                if pull_models or click.confirm(f"Pull {model_name} now?"):
-                    setup_module.pull_model(model_name)
+                if pull_models or click.confirm(f"\nPull {model_name}? (This may take several minutes)"):
+                    progress.update(task, description=f"[blue]Pulling {model_name}...[/blue]", total=None)
+                    if setup_module.pull_model(model_name):
+                        progress.update(task, description=f"[green]{model_name} pulled![/green]", completed=True)
+                    else:
+                        progress.update(task, description=f"[red]Failed to pull {model_name}[/red]", completed=True)
+                else:
+                    progress.update(task, description=f"[yellow]Skipped {model_name}[/yellow]", completed=True)
             else:
-                console.print(f"[green]Model {model_name} is already available[/green]")
-            progress.update(task, completed=True)
+                progress.update(task, description=f"[green]{model_name} already available![/green]", completed=True)
 
 
 @cli.command(help="Index documents from a folder")
