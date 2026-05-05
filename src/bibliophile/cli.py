@@ -202,7 +202,6 @@ def index(ctx, folder, name, chunk_size, overwrite):
         console.print(f"\n[green]Extracted {len(documents)} document chunks[/green]")
         
         task = progress.add_task("Creating embeddings...", total=None)
-        console.print("[blue]Generating embeddings with Ollama...[/blue]")
         progress.update(task, completed=True)
         
         task = progress.add_task(f"Storing in ChromaDB collection: {collection_name}...", total=None)

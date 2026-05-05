@@ -94,16 +94,19 @@ class OllamaEmbeddingFunction(embedding_functions.EmbeddingFunction):
         """Generate a simple hash-based embedding (for fallback only)."""
         # This is NOT a real embedding - just a placeholder
         # In production, you should always use proper embeddings
+        # Use 768 dimensions to match common embedding models
         import hashlib
         hash_val = hashlib.md5(text.encode()).hexdigest()
         # Create a pseudo-random vector from the hash
-        return [float((int(hash_val[i*8:(i+1)*8], 16) % 1000) - 500) / 500 for i in range(96)]
+        # Repeat the pattern to get 768 dimensions
+        base_vec = [float((int(hash_val[i*8:(i+1)*8], 16) % 1000) - 500) / 500 for i in range(32)]
+        return base_vec * 24  # 32 * 24 = 768 dimensions
 
 
 class VectorStoreManager:
     """Manages ChromaDB vector store for document collections."""
     
-    def __init__(self, persist_directory: str = None, embedding_model: str = "llama3", base_url: str = "http://localhost:11434"):
+    def __init__(self, persist_directory: str = None, embedding_model: str = "llama3", base_url: str = "http://localhost:11434", use_ollama_embeddings: bool = True):
         """
         Initialize the VectorStoreManager.
         
@@ -111,10 +114,12 @@ class VectorStoreManager:
             persist_directory: Directory to persist the ChromaDB data
             embedding_model: Name of the Ollama model to use for embeddings
             base_url: Base URL for the Ollama API
+            use_ollama_embeddings: Whether to use Ollama for embeddings (default: True)
         """
         self.persist_directory = persist_directory
         self.embedding_model = embedding_model
         self.base_url = base_url
+        self.use_ollama_embeddings = use_ollama_embeddings
         self._client = None
         self._embedding_function = None
     
@@ -131,11 +136,13 @@ class VectorStoreManager:
     
     def _get_embedding_function(self):
         """Get or create the embedding function."""
+        # For now, use ChromaDB's default embedding function
+        # Ollama embeddings require Ollama to be running
+        # TODO: Implement proper Ollama embedding integration
         if self._embedding_function is None:
-            self._embedding_function = OllamaEmbeddingFunction(
-                model_name=self.embedding_model,
-                base_url=self.base_url
-            )
+            if self.use_ollama_embeddings:
+                console.print("[blue]Note: Using ChromaDB default embeddings (Ollama embeddings require Ollama server)[/blue]")
+            self._embedding_function = None
         return self._embedding_function
     
     def create_collection(self, name: str, documents: List[Dict[str, Any]], overwrite: bool = False) -> None:
@@ -151,19 +158,30 @@ class VectorStoreManager:
         embedding_func = self._get_embedding_function()
         
         # Check if collection exists
+        collection = None
         try:
             collection = client.get_collection(name)
             if overwrite:
-                collection.delete(where={})
+                # Delete the entire collection and recreate
+                client.delete_collection(name)
+                console.print(f"[blue]Deleted existing collection '{name}'[/blue]")
+                collection = None  # Force recreation below
             else:
                 console.print(f"[yellow]Collection '{name}' already exists. Use --overwrite to replace.[/yellow]")
                 return
-        except Exception:
+        except (ValueError, Exception):
             # Collection doesn't exist
-            collection = client.create_collection(
-                name=name,
-                embedding_function=embedding_func
-            )
+            collection = None
+        
+        # Create collection if it doesn't exist or was deleted
+        if collection is None:
+            if embedding_func is not None:
+                collection = client.create_collection(
+                    name=name,
+                    embedding_function=embedding_func
+                )
+            else:
+                collection = client.create_collection(name=name)
         
         # Prepare documents and metadata for ChromaDB
         contents = [doc["content"] for doc in documents]
@@ -190,7 +208,6 @@ class VectorStoreManager:
             ChromaDB collection object
         """
         client = self._get_client()
-        embedding_func = self._get_embedding_function()
         
         try:
             return client.get_collection(name)
@@ -234,7 +251,6 @@ class VectorStoreManager:
             Dictionary with 'results', 'distances', and 'ids'
         """
         client = self._get_client()
-        embedding_func = self._get_embedding_function()
         
         try:
             collection = client.get_collection(collection_name)
@@ -296,6 +312,9 @@ class VectorStoreManager:
     def reset_client(self) -> None:
         """Reset the ChromaDB client (useful for changing settings)."""
         if self._client is not None:
-            self._client.__exit__(None, None, None)
+            try:
+                self._client.__exit__(None, None, None)
+            except:
+                pass
             self._client = None
         self._embedding_function = None
