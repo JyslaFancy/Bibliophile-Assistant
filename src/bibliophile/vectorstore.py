@@ -106,7 +106,7 @@ class OllamaEmbeddingFunction(embedding_functions.EmbeddingFunction):
 class VectorStoreManager:
     """Manages ChromaDB vector store for document collections."""
     
-    def __init__(self, persist_directory: str = None, embedding_model: str = "llama3", base_url: str = "http://localhost:11434", use_ollama_embeddings: bool = True):
+    def __init__(self, persist_directory: str = None, embedding_model: str = "llama3", base_url: str = "http://localhost:11434", use_ollama_embeddings: bool = False):
         """
         Initialize the VectorStoreManager.
         

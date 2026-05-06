@@ -271,12 +271,11 @@ def index(ctx, folder, name, chunk_size, overwrite):
         
         console.print(f"\n[green]Extracted {len(documents)} document chunks[/green]")
         
-        task = progress.add_task("Creating embeddings...", total=None)
-        progress.update(task, completed=True)
-        
-        task = progress.add_task(f"Storing in ChromaDB collection: {collection_name}...", total=None)
+        task = progress.add_task("Creating embeddings (this may take a few minutes on first run)...", total=None)
+        task2 = progress.add_task(f"Storing in ChromaDB collection: {collection_name}...", total=None)
         vector_store.create_collection(collection_name, documents, overwrite=overwrite)
         progress.update(task, completed=True)
+        progress.update(task2, completed=True)
     
     console.print(f"\n[bold green]Successfully indexed {len(documents)} chunks to collection '{collection_name}'[/bold green]")
     
