@@ -107,7 +107,16 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
             table.add_row("Embedding", models['embedding'], models['embedding_reason'])
             console.print(table)
             
-            if click.confirm("\nUse these suggestions?", default=True):
+            # Auto-accept if any auto-flag is set, otherwise prompt
+            if install_ollama or pull_models or start_server:
+                console.print("[green]Using suggested models...[/green]")
+                config.set_config({
+                    "ollama": {
+                        "chat_model": models['chat'],
+                        "embedding_model": models['embedding']
+                    }
+                })
+            elif click.confirm("\nUse these suggestions?", default=True, show_default=True):
                 config.set_config({
                     "ollama": {
                         "chat_model": models['chat'],
