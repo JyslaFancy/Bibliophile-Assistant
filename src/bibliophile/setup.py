@@ -17,7 +17,7 @@ console = Console()
 def check_ollama() -> bool:
     """Check if Ollama is installed and available in PATH."""
     try:
-        result = subprocess.run(
+        result = _run_subprocess(
             ["ollama", "--version"],
             capture_output=True,
             text=True,
@@ -26,6 +26,16 @@ def check_ollama() -> bool:
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
+
+
+def _run_subprocess(cmd, **kwargs):
+    """Run subprocess with proper encoding for Windows."""
+    import sys
+    # On Windows, use utf-8 encoding to avoid charmap errors
+    if platform.system() == "Windows":
+        kwargs["encoding"] = "utf-8"
+        kwargs["errors"] = "ignore"
+    return subprocess.run(cmd, **kwargs)
 
 
 def setup_ollama() -> bool:
@@ -42,7 +52,7 @@ def setup_ollama() -> bool:
         if system == "linux":
             # Download the installer
             console.print("[blue]Downloading Ollama installer...[/blue]")
-            result = subprocess.run(
+            result = _run_subprocess(
                 ["curl", "-fsSL", "https://ollama.ai/install.sh", "-o", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
@@ -58,7 +68,7 @@ def setup_ollama() -> bool:
             
             # Run the installer
             console.print("[blue]Running Ollama installer...[/blue]")
-            result = subprocess.run(
+            result = _run_subprocess(
                 ["bash", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
@@ -87,7 +97,7 @@ def setup_ollama() -> bool:
             
         elif system == "darwin":  # macOS
             console.print("[blue]Downloading Ollama installer...[/blue]")
-            result = subprocess.run(
+            result = _run_subprocess(
                 ["curl", "-fsSL", "https://ollama.ai/install.sh", "-o", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
@@ -100,7 +110,7 @@ def setup_ollama() -> bool:
             os.chmod("install_ollama.sh", 0o755)
             
             console.print("[blue]Running Ollama installer...[/blue]")
-            result = subprocess.run(
+            result = _run_subprocess(
                 ["bash", "install_ollama.sh"],
                 capture_output=True,
                 text=True,
@@ -129,7 +139,7 @@ def setup_ollama() -> bool:
             
             # Try using winget
             try:
-                result = subprocess.run(
+                result = _run_subprocess(
                     ["winget", "install", "-e", "--id", "Ollama.Ollama", "--silent"],
                     capture_output=True,
                     text=True,
@@ -150,7 +160,7 @@ def setup_ollama() -> bool:
                     console.print(f"[yellow]winget install failed (exit code: {result.returncode})[/yellow]")
                     # Try non-silent mode
                     console.print("[blue]Trying interactive winget install...[/blue]")
-                    result = subprocess.run(
+                    result = _run_subprocess(
                         ["winget", "install", "--id", "Ollama.Ollama"],
                         capture_output=True,
                         text=True,
@@ -297,7 +307,7 @@ def pull_model(model_name: str, progress_callback=None) -> bool:
         else:
             console.print(f"[blue]Pulling {model_name}...[/blue]")
         
-        result = subprocess.run(
+        result = _run_subprocess(
             ["ollama", "pull", model_name],
             capture_output=True,
             text=True,
@@ -360,7 +370,8 @@ def start_ollama_server() -> bool:
         subprocess.Popen(
             ["ollama", "serve"],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
         )
         
         # Wait for server to start
@@ -383,46 +394,6 @@ def start_ollama_server() -> bool:
         return False
 
 
-def pull_model(model_name: str) -> bool:
-    """
-    Pull a model using Ollama.
-    Returns True if successful, False otherwise.
-    """
-    if not check_ollama():
-        console.print("[red]Ollama is not installed![/red]")
-        return False
-    
-    # First, make sure server is running
-    if not start_ollama_server():
-        return False
-    
-    console.print(f"\n[bold blue]Pulling model: {model_name}[/bold blue]")
-    
-    try:
-        result = subprocess.run(
-            ["ollama", "pull", model_name],
-            capture_output=True,
-            text=True,
-            timeout=600  # 10 minutes for larger models
-        )
-        
-        if result.returncode == 0:
-            console.print(f"[green]Model {model_name} pulled successfully![/green]")
-            return True
-        else:
-            console.print(f"[red]Failed to pull model: {model_name}[/red]")
-            if result.stderr:
-                console.print(f"Error: {result.stderr[:500]}")
-            return False
-            
-    except subprocess.TimeoutExpired:
-        console.print(f"[red]Timeout pulling model {model_name}[/red]")
-        return False
-    except Exception as e:
-        console.print(f"[red]Error pulling model: {e}[/red]")
-        return False
-
-
 def list_local_models() -> list:
     """
     List all locally available Ollama models.
@@ -432,7 +403,7 @@ def list_local_models() -> list:
         return []
     
     try:
-        result = subprocess.run(
+        result = _run_subprocess(
             ["ollama", "list"],
             capture_output=True,
             text=True,
