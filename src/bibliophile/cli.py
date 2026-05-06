@@ -364,7 +364,7 @@ def chat(ctx, collection, limit):
     
     while True:
         try:
-            user_input = click.prompt("\n[bold cyan]You:[/bold cyan] ", type=str, strip=True)
+            user_input = click.prompt("\n[bold cyan]You:[/bold cyan] ", type=str).strip()
         except (KeyboardInterrupt, EOFError):
             console.print("\n[bold yellow]Session ended.[/bold yellow]")
             break
