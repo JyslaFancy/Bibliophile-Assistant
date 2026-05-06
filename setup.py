@@ -8,4 +8,4 @@ This file is kept for backwards compatibility.
 from setuptools import setup
 
 # Minimal setup - actual config is in pyproject.toml
-setup()
+setup(version="0.1.1")
