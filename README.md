@@ -1,6 +1,6 @@
 # Bibliophile Assistant
 
-A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant. Users can point to folders with documents (Word, PDF, Markdown, Excel, PowerPoint) and the tool will index them for AI-powered question answering.
+A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant. Point it at folders with documents (Word, PDF, Markdown, Excel, PowerPoint) and ask questions in plain English.
 
 ## Features
 
@@ -10,136 +10,81 @@ A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant
 - **Auto-Setup**: Detects hardware (RAM, GPU) and suggests appropriate models
 - **User-Friendly CLI**: Easy-to-use command-line interface with progress indicators
 
-## Installation
-
-### 📦 Option 1: Install from PyPI (Recommended)
-
-```bash
-pip install bibliophile-assistant
-```
-
-This installs the `bibliophile` command globally. After installing, you can run:
-```bash
-bibliophile setup
-bibliophile index /path/to/docs
-bibliophile chat
-```
-
 ---
 
-### 📁 Option 2: Install from GitHub
+## Quick Start (No Python Required)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/JyslaFancy/Bibliophile-Assistant.git
-   cd Bibliophile-Assistant
-   ```
+### 1. Install
 
-2. Install in development mode:
-   ```bash
-   pip install -e .
-   ```
+**Windows (PowerShell)** — one-liner, works immediately:
 
-After installing, the `bibliophile` command will be available in your PATH.
-
----
-
-### ⚠️ Windows Users
-
-After installing, if you get `'bibliophile' is not recognized...`:
-
-**Solution 1: Add Python Scripts to PATH (Recommended)**
 ```powershell
-# Run this once to add to your user PATH
-[Environment]::SetEnvironmentVariable("Path", "$env:Path;$env:APPDATA\Python\Scripts", "User")
-# Then open a NEW PowerShell window
+irm https://raw.githubusercontent.com/JyslaFancy/Bibliophile-Assistant/main/install.ps1 | iex
 ```
 
-**Solution 2: Use Python module directly**
+This downloads the latest `bibliophile.exe`, puts it in `%LOCALAPPDATA%\Programs\Bibliophile`, and adds it to your PATH.
+
+After it finishes, restart your terminal and run:
+
 ```powershell
-python -m bibliophile.main setup
-python -m bibliophile.main index C:\path\to\docs
-python -m bibliophile.main chat
-```
-
-**Solution 3: Install system-wide (requires admin)**
-```powershell
-pip install bibliophile-assistant
-```
-
----
-
-### Prerequisites
-
-- **Python 3.8+**
-- **pip** (usually comes with Python)
-
----
-
-### Setup Ollama
-
-After installing the package, set up Ollama:
-
-```bash
-# Auto-install Ollama, pull models, and start server
 bibliophile setup --install-ollama --pull-models --start-server
 ```
 
-What this does:
-- Detects your hardware (RAM, GPU)
-- Installs Ollama automatically (Linux: curl, macOS: curl, Windows: winget)
-- Suggests optimal models for your system
-- Pulls the recommended models
-- Starts the Ollama server
+**Windows (winget)** — once approved by winget-pkgs:
 
-**Note:** Windows users may need to open PowerShell as Administrator for the first install.
+```
+winget install JyslaFancy.BibliophileAssistant
+```
+
+> Currently pending submission. Use the PowerShell install above until then.
+
+**Linux** — one-liner:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JyslaFancy/Bibliophile-Assistant/main/install.sh | bash
+```
+
+Or download the binary directly from the [Releases page](https://github.com/JyslaFancy/Bibliophile-Assistant/releases).
+
+### 2. Run
+
+```bash
+# Windows (PowerShell / Command Prompt)
+.\bibliophile.exe setup --install-ollama --pull-models --start-server
+
+# Linux
+./bibliophile setup --install-ollama --pull-models --start-server
+```
+
+That's it. No Python, no pip, no PATH — just download and run.
+
+### 3. Index and Ask
+
+```bash
+# Index your documents
+./bibliophile index /path/to/your/documents
+
+# Ask a question
+./bibliophile ask "What is this about?"
+
+# Start interactive chat
+./bibliophile chat
+```
+
+**Prerequisites**: You'll need Ollama installed (the `setup` command above handles this automatically). The standalone binary bundles everything else — Python, all libraries, ChromaDB — so you don't install anything else.
+
+---
 
 ## Usage
 
-### 💡 Quick Start
-
-```bash
-# Setup everything (Ollama + models + server)
-bibliophile setup --install-ollama --pull-models --start-server
-
-# Index your documents
-bibliophile index /path/to/your/documents
-
-# Ask a question
-bibliophile ask "What is this about?"
-
-# Start interactive chat
-bibliophile chat
-```
-
----
-
-### Setup and Configuration
+### Setup
 
 ```bash
 # Auto-detect hardware and suggest models
 bibliophile setup
 
-# Auto-install Ollama if not found
-bibliophile setup --install-ollama
-
-# Auto-pull suggested models
-bibliophile setup --pull-models
-
-# Start Ollama server
-bibliophile setup --start-server
-
-# Full auto-setup (install + models + server)
+# Full auto-setup (install Ollama + pull models + start server)
 bibliophile setup --install-ollama --pull-models --start-server
-
-# Or manually configure
-bibliophile setup --manual
-```
-
-**Windows users:** If `bibliophile` command doesn't work, use:
-```powershell
-python -m bibliophile.main setup
-python -m bibliophile.main index C:\path\to\docs
 ```
 
 ### Index Documents
@@ -161,27 +106,16 @@ bibliophile index /path/to/documents --overwrite
 ### Ask Questions
 
 ```bash
-# Ask a question about your documents
 bibliophile ask "What is the main topic of these documents?"
-
-# Ask from a specific collection
 bibliophile ask "What are the key findings?" --collection my_project
-
-# Get more results
 bibliophile ask "Summarize the documents" --limit 10
 ```
 
 ### Interactive Chat
 
 ```bash
-# Start an interactive chat session
 bibliophile chat
-
-# With a specific collection
 bibliophile chat --collection my_project
-
-# With more results per query
-bibliophile chat --limit 10
 ```
 
 **Chat Commands:**
@@ -193,122 +127,108 @@ bibliophile chat --limit 10
 ### Manage Collections
 
 ```bash
-# List all collections
 bibliophile list-collections
-
-# Delete a collection
 bibliophile delete-collection my_project
 ```
 
 ### Configuration
 
 ```bash
-# Show current configuration
-bibliophile config-show
-
-# Reset configuration
-bibliophile config-reset
-
-# Use custom config file
-bibliophile --config /path/to/config.yaml index /path/to/documents
+bibliophile config-show         # Show current configuration
+bibliophile config-reset        # Reset to defaults
 ```
+
+---
 
 ## Supported File Types
 
-- `.pdf` - PDF documents
-- `.docx` - Word documents (Office Open XML)
-- `.doc` - Word documents (legacy)
-- `.md` - Markdown files
-- `.txt` - Plain text files
-- `.xlsx` - Excel spreadsheets
-- `.xls` - Excel spreadsheets (legacy)
-- `.pptx` - PowerPoint presentations
-- `.ppt` - PowerPoint presentations (legacy)
+- `.pdf` — PDF documents
+- `.docx` — Word documents (Office Open XML)
+- `.doc` — Word documents (legacy, requires `antiword` or `catdoc`)
+- `.md` — Markdown files
+- `.txt` — Plain text files
+- `.xlsx` / `.xls` — Excel spreadsheets
+- `.pptx` / `.ppt` — PowerPoint presentations
 
-## Configuration
-
-Configuration is stored in `~/.bibliophile/config.yaml` by default.
-
-### Configuration Options
-
-```yaml
-ollama:
-  chat_model: "llama3"        # Model for chat/answering
-  embedding_model: "llama3"   # Model for embeddings
-  base_url: "http://localhost:11434"  # Ollama API URL
-
-chroma:
-  path: ".bibliophile/chroma"  # ChromaDB data directory
-  persist_directory: null
-
-document_processing:
-  chunk_size: 1000           # Characters per chunk
-  chunk_overlap: 200         # Overlap between chunks
-  supported_extensions:     # File extensions to process
-    - ".pdf"
-    - ".docx"
-    - ".md"
-    - ".txt"
-    - ".xlsx"
-    - ".pptx"
-
-collections: []             # List of indexed collections
-```
+---
 
 ## Hardware Requirements
 
-The tool will automatically detect your system hardware and suggest appropriate models:
+Bibliophile automatically detects your hardware and suggests appropriate models:
 
-- **Minimum**: 8GB RAM - Uses small models like `llama3`
-- **Recommended**: 16GB+ RAM - Can use larger models like `llama3.2`
-- **With GPU**: 12GB+ VRAM - Can use GPU-accelerated models
+- **Minimum**: 8GB RAM — uses lightweight models
+- **Recommended**: 16GB+ RAM — comfortable performance
+- **With GPU**: 12GB+ VRAM — GPU-accelerated inference
 
-## Troubleshooting
+---
 
-### Ollama not found
+## For Developers
 
-Make sure Ollama is installed and running:
+### Install from PyPI
+
 ```bash
-ollama --version
-ollama serve
+pip install bibliophile-assistant
 ```
 
-### Missing dependencies
+### Install from Source
 
-Install required packages:
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/JyslaFancy/Bibliophile-Assistant.git
+cd Bibliophile-Assistant
+pip install -e ".[dev]"
 ```
 
-For PDF support:
+### Build the Standalone Executable
+
 ```bash
-pip install pypdf
+pip install -e ".[dev]"
+python scripts/build.py
 ```
 
-For Word/Excel/PowerPoint support:
+Output goes to `dist/bibliophile` (or `dist/bibliophile.exe` on Windows).
+
+### Submitting to winget-pkgs
+
+After creating a release, generate the winget manifest:
+
 ```bash
-pip install python-docx openpyxl python-pptx
+python scripts/generate_winget.py v0.1.1
 ```
 
-### ChromaDB issues
+Then submit the generated `winget/` files to the [winget-pkgs](https://github.com/microsoft/winget-pkgs) community repository as a pull request. Once merged, users can run:
 
-Make sure ChromaDB is installed:
-```bash
-pip install chromadb
+```
+winget install JyslaFancy.BibliophileAssistant
 ```
 
-## Development
+### Configuration
 
-Run the CLI directly:
-```bash
-python -m bibliophile.main
-```
+Configuration is stored in `~/.bibliophile/config.yaml`:
 
-Or install in development mode:
-```bash
-pip install -e .
+```yaml
+ollama:
+  chat_model: "llama3"
+  embedding_model: "nomic-embed-text"
+  base_url: "http://localhost:11434"
+
+chroma:
+  path: ".bibliophile/chroma"
+
+document_processing:
+  chunk_size: 1000
+  chunk_overlap: 200
+  supported_extensions:
+    - ".pdf"
+    - ".docx"
+    - ".doc"
+    - ".md"
+    - ".txt"
+    - ".xlsx"
+    - ".xls"
+    - ".pptx"
+    - ".ppt"
 ```
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License — See [LICENSE](LICENSE) for details.

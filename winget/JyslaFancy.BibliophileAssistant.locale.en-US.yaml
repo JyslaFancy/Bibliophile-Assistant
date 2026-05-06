@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: JyslaFancy.BibliophileAssistant
+PackageVersion: 0.1.1
+PackageLocale: en-US
+Publisher: JyslaFancy
+PublisherUrl: https://github.com/JyslaFancy
+PublisherSupportUrl: https://github.com/JyslaFancy/Bibliophile-Assistant/issues
+PackageName: Bibliophile Assistant
+PackageUrl: https://github.com/JyslaFancy/Bibliophile-Assistant
+License: MIT
+LicenseUrl: https://github.com/JyslaFancy/Bibliophile-Assistant/blob/main/LICENSE
+ShortDescription: Document-based AI assistant using Ollama and ChromaDB
+Description: A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant. Users can point to folders with documents and the tool will index them for AI-powered question answering. No Python knowledge required.
+Tags:
+  - ollama
+  - chromadb
+  - ai
+  - rag
+  - document-search
+  - cli
+ReleaseNotesUrl: https://github.com/JyslaFancy/Bibliophile-Assistant/releases/tag/v0.1.1
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

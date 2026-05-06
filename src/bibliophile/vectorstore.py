@@ -136,13 +136,14 @@ class VectorStoreManager:
     
     def _get_embedding_function(self):
         """Get or create the embedding function."""
-        # For now, use ChromaDB's default embedding function
-        # Ollama embeddings require Ollama to be running
-        # TODO: Implement proper Ollama embedding integration
         if self._embedding_function is None:
             if self.use_ollama_embeddings:
-                console.print("[blue]Note: Using ChromaDB default embeddings (Ollama embeddings require Ollama server)[/blue]")
-            self._embedding_function = None
+                self._embedding_function = OllamaEmbeddingFunction(
+                    model_name=self.embedding_model,
+                    base_url=self.base_url
+                )
+            else:
+                self._embedding_function = None
         return self._embedding_function
     
     def create_collection(self, name: str, documents: List[Dict[str, Any]], overwrite: bool = False) -> None:

@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+PackageIdentifier: JyslaFancy.BibliophileAssistant
+PackageVersion: 0.1.1
+InstallerLocale: en-US
+InstallerType: portable
+Commands:
+  - bibliophile
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/JyslaFancy/Bibliophile-Assistant/releases/download/v0.1.1/bibliophile.exe
+    InstallerSha256: REPLACE_WITH_ACTUAL_SHA256
+ManifestType: installer
+ManifestVersion: 1.6.0

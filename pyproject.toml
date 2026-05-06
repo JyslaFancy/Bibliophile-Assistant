@@ -44,6 +44,11 @@ dependencies = [
     "python-pptx>=0.6.21",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6.0.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/JyslaFancy/Bibliophile-Assistant"
 Repository = "https://github.com/JyslaFancy/Bibliophile-Assistant.git"

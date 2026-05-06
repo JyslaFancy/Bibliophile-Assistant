@@ -80,7 +80,7 @@ Answer:"""
             The model's response
         """
         import requests
-        from .setup import start_ollama_server, check_ollama
+        from .ollama_setup import start_ollama_server, check_ollama
         
         # Check if Ollama is installed and server is running
         if not check_ollama():

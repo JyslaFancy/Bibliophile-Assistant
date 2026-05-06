@@ -7,7 +7,6 @@ import sys
 import subprocess
 import platform
 import psutil
-import GPUtil
 from typing import Dict, Any, Optional
 from rich.console import Console
 
@@ -225,6 +224,7 @@ def detect_hardware() -> Dict[str, Any]:
         
         # GPU detection
         try:
+            import GPUtil
             gpus = GPUtil.getGPUs()
             if gpus:
                 gpu = gpus[0]
@@ -275,14 +275,17 @@ def suggest_models(hardware: Dict[str, Any]) -> Dict[str, Any]:
         suggestions["chat"] = "llama3"
         suggestions["chat_reason"] = "Low RAM - smallest model"
     
-    # Embedding model suggestions (typically smaller)
-    # Ollama supports various embedding models like llama3, mistral, etc.
+    # Embedding model suggestions (must be actual embedding models, not chat models)
+    # Ollama-supported embedding models: nomic-embed-text, mxbai-embed-large, all-minilm, bge-m3
     if ram_gb >= 16 or (gpu and gpu_memory_gb >= 8):
-        suggestions["embedding"] = "llama3:latest"
-        suggestions["embedding_reason"] = "Sufficient resources for larger embedding model"
+        suggestions["embedding"] = "nomic-embed-text"
+        suggestions["embedding_reason"] = "Best quality embeddings, 137M params"
+    elif ram_gb >= 8:
+        suggestions["embedding"] = "all-minilm"
+        suggestions["embedding_reason"] = "Lightweight embedding model, 23M params"
     else:
-        suggestions["embedding"] = "llama3"
-        suggestions["embedding_reason"] = "Conservative choice for limited resources"
+        suggestions["embedding"] = "all-minilm"
+        suggestions["embedding_reason"] = "Smallest embedding model for limited resources"
     
     return suggestions
 

@@ -16,7 +16,7 @@ console = Console()
 
 def get_setup_module():
     """Lazy import of setup module."""
-    from . import setup
+    from . import ollama_setup as setup
     return setup
 
 

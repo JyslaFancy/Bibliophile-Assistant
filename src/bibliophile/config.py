@@ -17,7 +17,7 @@ class ConfigManager:
     DEFAULT_CONFIG = {
         "ollama": {
             "chat_model": "llama3",
-            "embedding_model": "llama3",
+            "embedding_model": "nomic-embed-text",
             "base_url": "http://localhost:11434"
         },
         "chroma": {

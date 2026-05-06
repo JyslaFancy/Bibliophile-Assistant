@@ -15,6 +15,9 @@ python-docx>=0.8.11
 openpyxl>=3.0.0
 python-pptx>=0.6.21
 
+# Build tools (for creating standalone executable)
+# pyinstaller>=6.0.0
+
 # Optional: for legacy DOC files
 # antiword (system package)
 # catdoc (system package)
