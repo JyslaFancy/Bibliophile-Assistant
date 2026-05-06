@@ -5,9 +5,17 @@
 # and adds it to your user PATH so 'bibliophile' works from any terminal.
 
 param(
-    [string]$Version = "latest",
+    [string]$Version = "",
     [string]$InstallDir = "$env:LOCALAPPDATA\Programs\Bibliophile"
 )
+
+# Allow setting version via environment variable for one-liner pipe usage
+if (-not $Version -and $env:BIBLIOPHILE_VERSION) {
+    $Version = $env:BIBLIOPHILE_VERSION
+}
+if (-not $Version) {
+    $Version = "latest"
+}
 
 $ErrorActionPreference = "Stop"
 $Repo = "JyslaFancy/Bibliophile-Assistant"

@@ -19,7 +19,7 @@ A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant
 **Windows (PowerShell)** — one-liner, works immediately:
 
 ```powershell
-irm https://raw.githubusercontent.com/JyslaFancy/Bibliophile-Assistant/main/install.ps1 | iex
+$env:BIBLIOPHILE_VERSION='v0.1.3'; irm https://raw.githubusercontent.com/JyslaFancy/Bibliophile-Assistant/main/install.ps1 | iex
 ```
 
 This downloads the latest `bibliophile.exe`, puts it in `%LOCALAPPDATA%\Programs\Bibliophile`, and adds it to your PATH.
