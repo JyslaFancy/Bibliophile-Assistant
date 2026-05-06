@@ -18,7 +18,12 @@ A CLI tool that uses Ollama and ChromaDB to create a document-based AI assistant
 pip install bibliophile-assistant
 ```
 
-This installs the `bibliophile` command globally.
+This installs the `bibliophile` command globally. After installing, you can run:
+```bash
+bibliophile setup
+bibliophile index /path/to/docs
+bibliophile chat
+```
 
 ---
 
@@ -34,6 +39,8 @@ This installs the `bibliophile` command globally.
    ```bash
    pip install -e .
    ```
+
+After installing, the `bibliophile` command will be available in your PATH.
 
 ---
 

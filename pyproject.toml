@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bibliophile-assistant"
+version = "0.1.0"
+description = "Document-based AI assistant using Ollama and ChromaDB"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Harald Daltveit", email = "harald@daltveit.com"}
+]
+keywords = ["ollama", "chromadb", "ai", "document-search", "rag", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+    "Topic :: Text Processing",
+]
+
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "requests>=2.28.0",
+    "psutil>=5.9.0",
+    "GPUtil>=1.4.0",
+    "chromadb>=0.4.0",
+    "pypdf>=3.0.0",
+    "python-docx>=0.8.11",
+    "openpyxl>=3.0.0",
+    "python-pptx>=0.6.21",
+]
+
+[project.urls]
+Homepage = "https://github.com/JyslaFancy/Bibliophile-Assistant"
+Repository = "https://github.com/JyslaFancy/Bibliophile-Assistant.git"
+Issues = "https://github.com/JyslaFancy/Bibliophile-Assistant/issues"
+
+[project.scripts]
+bibliophile = "bibliophile.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
