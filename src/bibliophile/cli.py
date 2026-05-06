@@ -107,6 +107,9 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
             table.add_row("Embedding", models['embedding'], models['embedding_reason'])
             console.print(table)
             
+            # Stop progress so click.confirm prompt is visible
+            progress.stop()
+
             # Auto-accept if any auto-flag is set, otherwise prompt
             if install_ollama or pull_models or start_server:
                 console.print("[green]Using suggested models...[/green]")
@@ -124,6 +127,9 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
                     }
                 })
                 console.print("[green]Configuration saved![/green]")
+
+            # Resume progress for remaining steps
+            progress.start()
         
         # Step 3: Check Ollama
         console.print("\n[bold blue]Step 3/5: Checking Ollama installation...[/bold blue]")
@@ -133,7 +139,9 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
         
         if not ollama_installed:
             console.print("\n[bold yellow]Ollama not found![/bold yellow]")
+            progress.stop()
             if install_ollama or click.confirm("Install Ollama now?"):
+                progress.start()
                 console.print("[blue]Installing Ollama (this may take a minute)...[/blue]")
                 if setup_module.setup_ollama():
                     console.print("[green]Ollama installed successfully![/green]")
@@ -141,6 +149,8 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
                 else:
                     console.print("[red]Failed to install Ollama[/red]")
                     console.print("Please install manually from https://ollama.ai")
+            else:
+                progress.start()
         else:
             console.print("[green]Ollama is already installed![/green]")
         
@@ -175,7 +185,9 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
             local_models = setup_module.list_local_models()
             
             if model_name not in local_models:
+                progress.stop()
                 if pull_models or click.confirm(f"\nPull {model_name}? (This may take 5-15 minutes)"):
+                    progress.start()
                     progress.update(task, description=f"Pulling {model_name}...", total=None)
                     console.print(f"[blue]Downloading {model_name} (this may take several minutes)...[/blue]")
                     if setup_module.pull_model(model_name):
@@ -185,6 +197,7 @@ def setup_cli(ctx, auto, install_ollama, pull_models, start_server):
                         console.print(f"[red]Failed to pull {model_name}[/red]")
                         progress.update(task, completed=True)
                 else:
+                    progress.start()
                     console.print(f"[yellow]Skipped {model_name}[/yellow]")
                     progress.update(task, completed=True)
             else:
