@@ -16,6 +16,9 @@ from pathlib import Path
 repo_root = Path(SPECPATH).parent
 sys.path.insert(0, str(repo_root / "src"))
 
+# Auto-collect all submodules of packages prone to dynamic imports
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
 
 # Collect all hidden imports needed for the various dependencies
@@ -26,9 +29,8 @@ hidden_imports = [
     "rich.console", "rich.panel", "rich.progress",
     "rich.table", "rich.text", "rich.markup",
 
-    # ChromaDB and its dependencies
-    "chromadb",
-    "chromadb.config", "chromadb.api", "chromadb.db", "chromadb.ingest",
+    # ChromaDB — collect all submodules to catch dynamic imports
+    *collect_submodules("chromadb"),
     "onnxruntime", "onnxruntime.capi",
     "sqlite3",
     "numpy",
