@@ -31,6 +31,12 @@ hidden_imports = [
 
     # ChromaDB — collect all submodules to catch dynamic imports
     *collect_submodules("chromadb"),
+    # Sentence-transformers / HuggingFace (used by ChromaDB's default embedding)
+    *collect_submodules("tokenizers"),
+    *collect_submodules("sentence_transformers"),
+    *collect_submodules("transformers"),
+    *collect_submodules("huggingface_hub"),
+    *collect_submodules("tiktoken"),
     "onnxruntime", "onnxruntime.capi",
     "sqlite3",
     "numpy",
