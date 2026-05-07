@@ -92,15 +92,11 @@ class OllamaEmbeddingFunction(embedding_functions.EmbeddingFunction):
     
     def _simple_embedding(self, text: str) -> List[float]:
         """Generate a simple hash-based embedding (for fallback only)."""
-        # This is NOT a real embedding - just a placeholder
-        # In production, you should always use proper embeddings
-        # Use 768 dimensions to match common embedding models
         import hashlib
         hash_val = hashlib.md5(text.encode()).hexdigest()
-        # Create a pseudo-random vector from the hash
-        # Repeat the pattern to get 768 dimensions
-        base_vec = [float((int(hash_val[i*8:(i+1)*8], 16) % 1000) - 500) / 500 for i in range(32)]
-        return base_vec * 24  # 32 * 24 = 768 dimensions
+        # 384 dimensions to match ChromaDB default (all-MiniLM-L6-v2)
+        base_vec = [float((int(hash_val[i*8:(i+1)*8], 16) % 1000) - 500) / 500 for i in range(24)]
+        return base_vec * 16  # 24 * 16 = 384 dimensions
 
 
 class VectorStoreManager:
