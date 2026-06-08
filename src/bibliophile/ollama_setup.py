@@ -251,8 +251,8 @@ def suggest_models(hardware: Dict[str, Any]) -> Dict[str, Any]:
     suggestions = {
         "chat": "llama3",
         "chat_reason": "Default",
-        "embedding": "llama3",
-        "embedding_reason": "Default",
+        "embedding": "nomic-embed-text",
+        "embedding_reason": "Default embedding model",
     }
     
     # Chat model suggestions

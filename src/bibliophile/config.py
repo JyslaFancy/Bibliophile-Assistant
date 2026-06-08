@@ -30,7 +30,7 @@ class ConfigManager:
             "supported_extensions": [".pdf", ".docx", ".doc", ".md", ".txt", ".xlsx", ".xls", ".pptx", ".ppt"]
         },
         "collections": [],
-        "version": "0.1.0"
+        "version": "0.1.9"
     }
     
     def __init__(self, config_path: str):

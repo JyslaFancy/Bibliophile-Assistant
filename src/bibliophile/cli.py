@@ -402,7 +402,7 @@ def chat(ctx, collection, limit):
         
         # Show typing indicator
         with console.status("[bold green]Thinking..."):
-            results = qa_engine.query(query_collection, user_input, limit=limit)
+            results = qa_engine.chat(query_collection, conversation_history, limit=limit)
         
         # Add AI response to history
         conversation_history.append({

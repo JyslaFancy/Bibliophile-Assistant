@@ -13,7 +13,8 @@ console = Console()
 class QAEngine:
     """Handles question answering using document retrieval and Ollama."""
     
-    def __init__(self, model_name: str = "llama3", chroma_path: str = None, base_url: str = "http://localhost:11434"):
+    def __init__(self, model_name: str = "llama3", chroma_path: str = None,
+                 base_url: str = "http://localhost:11434", embedding_model: str = "nomic-embed-text"):
         """
         Initialize the QA engine.
         
@@ -25,20 +26,27 @@ class QAEngine:
         self.model_name = model_name
         self.chroma_path = chroma_path
         self.base_url = base_url
+        self.embedding_model = embedding_model
         self._vector_store = None
         self._init_vector_store()
     
     def _init_vector_store(self) -> None:
         """Initialize the vector store manager."""
         from .vectorstore import VectorStoreManager
-        
+
         if self.chroma_path:
             self._vector_store = VectorStoreManager(
                 persist_directory=self.chroma_path,
-                base_url=self.base_url
+                embedding_model=self.embedding_model,
+                base_url=self.base_url,
+                use_ollama_embeddings=True
             )
         else:
-            self._vector_store = VectorStoreManager(base_url=self.base_url)
+            self._vector_store = VectorStoreManager(
+                embedding_model=self.embedding_model,
+                base_url=self.base_url,
+                use_ollama_embeddings=True
+            )
     
     def _generate_prompt(self, query: str, context: str = "") -> str:
         """
@@ -199,28 +207,99 @@ Answer:"""
     def chat(self, collection_name: str, messages: List[Dict[str, str]], limit: int = 5) -> Dict[str, Any]:
         """
         Have a chat conversation with context from documents.
-        
+
         Args:
             collection_name: Name of the ChromaDB collection
             messages: List of message dictionaries with 'role' and 'content'
             limit: Number of documents to retrieve
-            
+
         Returns:
             Dictionary with 'answer', 'sources', etc.
         """
-        # For now, we'll just use the last user message
-        # In a full implementation, we'd maintain conversation context
         user_messages = [m for m in messages if m.get("role") == "user"]
-        
+
         if not user_messages:
             return {
                 "answer": "Please ask a question.",
                 "sources": [],
                 "confidence": 0.0
             }
-        
+
+        # Use the last user question for retrieval
         question = user_messages[-1].get("content", "")
-        return self.query(collection_name, question, limit)
+
+        # Step 1: Retrieve relevant documents
+        results = self._vector_store.query(
+            collection_name=collection_name,
+            query_text=question,
+            limit=limit
+        )
+
+        if not results["results"]:
+            return {
+                "answer": "I couldn't find any relevant information in your documents.",
+                "sources": [],
+                "confidence": 0.0
+            }
+
+        # Step 2: Build context from retrieved docs
+        context_parts = []
+        sources = []
+        for i, (doc, metadata) in enumerate(zip(results["results"], results["metadatas"])):
+            if doc and doc.strip():
+                source = metadata.get("source", "unknown") if metadata else "unknown"
+                chunk_index = metadata.get("chunk_index", 0) if metadata else 0
+                context_parts.append(f"--- Document {i+1} (from {source}) ---\n{doc}")
+                sources.append(f"{source} (chunk {chunk_index})")
+        context = "\n\n".join(context_parts) if context_parts else ""
+
+        # Step 3: Build prompt with conversation history
+        history_text = ""
+        if len(messages) > 1:
+            # Include recent conversation turns (last 6 messages)
+            recent = messages[-6:]
+            history_lines = []
+            for m in recent[:-1]:  # Exclude the last message (current question)
+                role = m.get("role", "unknown").capitalize()
+                content = m.get("content", "")
+                history_lines.append(f"{role}: {content}")
+            if history_lines:
+                history_text = "Previous conversation:\n" + "\n".join(history_lines) + "\n\n"
+
+        prompt = f"""You are an AI assistant helping users find information in their documents.
+Based on the following context from the user's documents, answer the question.
+
+{history_text}Context:
+{context}
+
+Question: {question}
+
+Answer the question using only the information from the context. If the answer is not in the context, say "I don't know" or "I couldn't find that information in your documents."
+
+Answer:"""
+
+        # Step 4: Call Ollama
+        with console.status("[bold blue]Generating answer..."):
+            try:
+                answer = self._call_ollama(prompt)
+            except Exception as e:
+                console.print(f"[red]Error generating answer: {e}[/red]")
+                answer = "I'm sorry, I couldn't generate an answer at this time."
+
+        # Calculate confidence
+        if results["distances"]:
+            distances = [1.0 - float(d) if d < 1.0 else 0.0 for d in results["distances"]]
+            confidence = sum(distances) / len(distances) if distances else 0.0
+        else:
+            confidence = 0.0
+
+        return {
+            "answer": answer,
+            "sources": sources,
+            "confidence": confidence,
+            "retrieved_documents": results["results"],
+            "distances": results["distances"]
+        }
     
     def get_context(self, collection_name: str, question: str, limit: int = 5) -> str:
         """
